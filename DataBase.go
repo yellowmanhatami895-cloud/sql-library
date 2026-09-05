@@ -13,15 +13,57 @@ func createDB() {
 	db.Exec("PRAGMA foreign_keys = ON")
 	db.Exec("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,price INT NOT NULL,quantity INT NOT NULL);")
 	db.Exec("CREATE TABLE IF NOT EXISTS staff (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,password TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'Librarian');")
-	db.Exec("CREATE TABLE IF NOT EXISTS customer (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,inventory INT NOT NULL,role TEXT NOT NULL DEFAULT 'customer');")
-	db.Exec("CREATE TABLE IF NOT EXISTS safekeeping (id INTEGER PRIMARY KEY AUTOINCREMENT,bookID INT NOT NULL,customerID INT NOT NULL,FOREIGN KEY (bookID) REFERENCES books(id),FOREIGN KEY (customerID) REFERENCES customer(id),);")
+	db.Exec("CREATE TABLE IF NOT EXISTS customer (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,inventory INT NOT NULL,password TEXT NOT NULL,stat TEXT NOT NULL DEFAULT 'Free');")
+	db.Exec("CREATE TABLE IF NOT EXISTS safekeeping (id INTEGER PRIMARY KEY AUTOINCREMENT,bookID INT NOT NULL,customerID INT NOT NULL,FOREIGN KEY (bookID) REFERENCES books(id),FOREIGN KEY (customerID) REFERENCES customer(id));")
 	fmt.Println("data base connected")
+}
+func editStaffDB(id int) error {
+	var row string
+	var name string
+	var password string
+	var role string
+
+	err := db.QueryRow("SELECT * FROM staff WHERE id = ?", id).Scan(&id, &name, &password, &role)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	row = strconv.Itoa(id) + "  " + name + "  " + password + "  " + role
+	fmt.Println(row)
+	fmt.Println("Enter new row")
+	name = getInput("Enter name")
+	password = getInput("Enter password")
+	role = getInput("Enter role")
+	_, err = db.Exec("UPDATE staff SET name = ?, password = ?, role = ? WHERE id = ?", name, password, role, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func insertCustomerDB(record []string) error {
+	if len(record) != 5 {
+		return fmt.Errorf("Wrong length")
+	}
+	id, err := strconv.Atoi(record[0])
+	if err != nil {
+		return fmt.Errorf("id most be integer")
+	}
+
+	inventory, err := strconv.Atoi(record[2])
+	_, err = db.Exec("INSERT INTO customer VALUES(?,?,?,?,?) ", id, record[1], inventory, record[3], record[4])
+
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
 }
 
 func checkDB() bool {
 
 	var count int
 	err := db.QueryRow("SELECT COUNT(*) FROM staff").Scan(&count)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,18 +80,150 @@ func insertStaffDB(record []string) error {
 	if err != nil {
 		return fmt.Errorf("id most be integer")
 	}
-	db.Exec("INSERT INTO staff VALUES(?,?,?,?) ", id, record[1], record[2], record[3])
+	_, err = db.Exec("INSERT INTO staff VALUES(?,?,?,?) ", id, record[1], record[2], record[3])
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	return nil
 }
-func checkStaff(username string, password string) bool {
-	var pass string
 
-	err := db.QueryRow("SELECT password FROM staff WHERE name = ?", username).Scan(&pass)
+func removeFromStaffDB(id string) error {
+	var name string
+	db.QueryRow("SELECT name FROM staff WHERE id = ?", id).Scan(&name)
+	if name == "" {
+		fmt.Println("id not found")
+	}
+	_, err := db.Exec("DELETE FROM staff WHERE id = ?", id)
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+	fmt.Println(name + "Has been deleted")
+	return nil
+}
+func checkStaff(username string, password string) (bool, string) {
+	var pass string
+	var role string
+	err := db.QueryRow("SELECT password,role FROM staff WHERE name = ?", username).Scan(&pass, &role)
+	if pass == "" {
+		fmt.Println("user not found")
+	}
+	if err != nil {
+		fmt.Println(err)
 	}
 	if pass == password {
-		return true
+		return true, role
 	}
-	return false
+	fmt.Println("wrong password")
+	return false, ""
+}
+func printStaffDB() error {
+	rows, err := db.Query("SELECT * FROM staff")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var name string
+		var password string
+		var role string
+		err := rows.Scan(&id, &name, &password, &role)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(id, name, password, role)
+	}
+
+	return nil
+}
+func removeFromCustomerDB(id string) error {
+	var name string
+	db.QueryRow("SELECT name FROM customer WHERE id = ?", id).Scan(&name)
+	if name == "" {
+		fmt.Println("id not found")
+	}
+	_, err := db.Exec("DELETE FROM customer WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+	fmt.Println(name + " Has been deleted")
+	return nil
+}
+func editCustomerDB(id int) error {
+	var row string
+	var name string
+	var inventory string
+	var password string
+	var stat string
+
+	err := db.QueryRow("SELECT * FROM customer WHERE id = ?", id).Scan(&id, &name, &inventory, &password, &stat)
+	if name == "" {
+		fmt.Println("id not found")
+	}
+	if err != nil {
+		fmt.Println(err)
+
+	}
+	row = strconv.Itoa(id) + "  " + name + "  " + inventory + "  " + password + "  " + stat
+	fmt.Println(row)
+	fmt.Println("Enter new row")
+	name = getInput("Enter name")
+	inventory = getInput("Enter inventory")
+	password = getInput("Enter password")
+	stat = getInput("Enter role")
+	_, err = db.Exec("UPDATE customer SET name = ?,inventory = ? ,password = ?, stat = ? WHERE id = ?", name, inventory, password, stat, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func printCustomerDB() error {
+	rows, err := db.Query("SELECT * FROM customer")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var name string
+		var inventory string
+		var password string
+		var stat string
+		err := rows.Scan(&id, &name, &inventory, &password, &stat)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(id, name, inventory, password, stat)
+	}
+
+	return nil
+}
+func printOneRecordStaff(id int) {
+	var name string
+	var password string
+	var role string
+	err := db.QueryRow("SELECT * FROM staff WHERE id = ?", id).Scan(&id, &name, &password, &role)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(name + " " + password + " " + role)
+
+}
+func printOneRecordCustomer(id int) {
+	var name string
+	var inventory int
+	var password string
+	var stat string
+	err := db.QueryRow("SELECT * FROM customer WHERE id = ?", id).Scan(&id, &name, &inventory, &password, &stat)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(name + " " + strconv.Itoa(inventory) + " " + password + " " + stat)
 }
