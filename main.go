@@ -58,10 +58,8 @@ mainLoop:
 			fmt.Println("DataBase is Empty")
 			username := getInput("Enter First username")
 			password := getInput("Enter First password")
-			err := insertStaffDB([]string{"1", username, password, "Manager"})
-			if err != nil {
-				fmt.Println(err)
-			}
+			insertStaffDB([]string{"1", username, password, "Manager"})
+
 		}
 		input := getMenu("Library", []string{"Customer", "Staff"})
 		switch input {
@@ -86,7 +84,7 @@ mainLoop:
 						case 1:
 						ManagerSTFLoop:
 							for {
-								input = getMenu("Staff", []string{"Add ", "Delete", "Edit", "Check list", "Check one"})
+								input = getMenu("Staffs", []string{"Add ", "Delete", "Edit", "Check list", "Check one"})
 								switch input {
 								case 1:
 									for {
@@ -116,7 +114,7 @@ mainLoop:
 										if id == "0" {
 											break
 										}
-										err := removeFromStaffDB(id)
+										removeFromStaffDB(id)
 										if err != nil {
 											fmt.Println(err)
 										}
@@ -134,10 +132,8 @@ mainLoop:
 											fmt.Println(err)
 											break
 										}
-										err = editStaffDB(intID)
-										if err != nil {
-											fmt.Println(err)
-										}
+										editStaffDB(intID)
+
 									}
 								case 4:
 									printStaffDB()
@@ -162,7 +158,7 @@ mainLoop:
 						ManagerCTSloop:
 
 							for {
-								input = getMenu("Customer", []string{"Add", "Delete", "Edit", "Check list", "Check one"})
+								input = getMenu("Customers", []string{"Add", "Delete", "Edit", "Check list", "Check one"})
 								switch input {
 								case 0:
 									break ManagerCTSloop
@@ -213,8 +209,76 @@ mainLoop:
 								}
 							}
 						case 3:
+						ManagerBKSloop:
 							for {
-								input = getMenu("Customer", []string{"Add", "Delete", "Edit", "Check list"})
+								input = getMenu("Books", []string{"Add", "Delete", "Edit", "Check list", "Check one"})
+								switch input {
+								case 1:
+									for {
+										id := getInput("Enter id")
+										if id == "0" {
+											break
+										}
+										name := getInput("Enter name")
+										if name == "0" {
+											break
+										}
+										price := getInput("Enter price")
+										if price == "0" {
+											break
+										}
+
+										quantity := getInput("Enter quantity")
+										if quantity == "0" {
+											break
+										}
+										stat := getInput("Enter stat")
+										if stat == "0" {
+											break
+										}
+										insertBookDB([]string{id, name, price, quantity, stat})
+									}
+
+								case 2:
+									for {
+										id := getInput("Enter id")
+										if id == "0" {
+											break
+										}
+										removeFromBookDB(id)
+									}
+								case 3:
+									for {
+										id := getInput("Enter id")
+										if id == "0" {
+											break
+										}
+										intID, err := strconv.Atoi(id)
+										if err != nil {
+											fmt.Println(err)
+											break
+										}
+										editBookDB(intID)
+									}
+								case 4:
+									printBookDB()
+
+								case 5:
+									for {
+										id := getInput("Enter id")
+										if id == "0" {
+											break
+										}
+										intID, err := strconv.Atoi(id)
+										if err != nil {
+											fmt.Println(err)
+											continue
+										}
+										printOneRecordBook(intID)
+									}
+								case 0:
+									break ManagerBKSloop
+								}
 							}
 						case 0:
 							break ManagerLoop
