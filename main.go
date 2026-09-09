@@ -12,6 +12,16 @@ import (
 
 var scanner = bufio.NewScanner(os.Stdin)
 
+func getIntInput(title string) int {
+	input := getInput(title)
+	intInput, err := strconv.Atoi(input)
+	if err != nil {
+		fmt.Println(err)
+		return 0
+	}
+	return intInput
+}
+
 func getInput(title string) string {
 	fmt.Printf("-----%s-----\n", title)
 
@@ -58,7 +68,7 @@ mainLoop:
 			fmt.Println("DataBase is Empty")
 			username := getInput("Enter First username")
 			password := getInput("Enter First password")
-			insertStaffDB([]string{"1", username, password, "Manager"})
+			insertIntoStaffDB([]string{"1", username, password, "Manager"})
 
 		}
 		input := getMenu("Library", []string{"Customer", "Staff"})
@@ -105,13 +115,13 @@ mainLoop:
 											break
 										}
 
-										insertStaffDB([]string{id, name, password, role})
+										insertIntoStaffDB([]string{id, name, password, role})
 
 									}
 								case 2:
 									for {
-										id := getInput("Enter unique id ")
-										if id == "0" {
+										id := getIntInput("Enter unique id ")
+										if id == 0 {
 											break
 										}
 										removeFromStaffDB(id)
@@ -122,33 +132,25 @@ mainLoop:
 									}
 								case 3:
 									for {
-										id := getInput("Enter id")
-										if id == "0" {
+										id := getIntInput("Enter id")
+										if id == 0 {
 											fmt.Println(err)
 											break
 										}
-										intID, err := strconv.Atoi(id)
-										if err != nil {
-											fmt.Println(err)
-											break
-										}
-										editStaffDB(intID)
+
+										editFromStaffDB(id)
 
 									}
 								case 4:
 									printStaffDB()
 								case 5:
 									for {
-										id := getInput("Enter id")
-										if id == "0" {
+										id := getIntInput("Enter id")
+										if id == 0 {
 											break
 										}
-										intID, err := strconv.Atoi(id)
-										if err != nil {
-											fmt.Println(err)
-											continue
-										}
-										printOneRecordStaff(intID)
+
+										printOneRecordStaff(id)
 									}
 								case 0:
 									break ManagerSTFLoop
@@ -168,11 +170,11 @@ mainLoop:
 									inventory := getInput("Enter inventory")
 									password := getInput("Enter password")
 									stat := getInput("Enter stat")
-									insertCustomerDB([]string{id, name, inventory, password, stat})
+									insertIntoCustomerDB([]string{id, name, inventory, password, stat})
 								case 2:
 									for {
-										id := getInput("Enter id")
-										if id == "0" {
+										id := getIntInput("Enter id")
+										if id == 0 {
 											break
 										}
 										removeFromCustomerDB(id)
@@ -181,30 +183,23 @@ mainLoop:
 
 								case 3:
 									for {
-										id := getInput("Enter id")
-										if id == "0" {
+										id := getIntInput("Enter id")
+										if id == 0 {
 											break
 										}
-										intID, err := strconv.Atoi(id)
-										if err != nil {
-											fmt.Println(err)
-										}
-										editCustomerDB(intID)
+
+										editFromCustomerDB(id)
 									}
 								case 4:
 									printCustomerDB()
 								case 5:
 									for {
-										id := getInput("Enter id")
-										if id == "0" {
+										id := getIntInput("Enter id")
+										if id == 0 {
 											break
 										}
-										intID, err := strconv.Atoi(id)
-										if err != nil {
-											fmt.Println(err)
-											continue
-										}
-										printOneRecordCustomer(intID)
+
+										printOneRecordCustomer(id)
 									}
 								}
 							}
@@ -236,45 +231,35 @@ mainLoop:
 										if stat == "0" {
 											break
 										}
-										insertBookDB([]string{id, name, price, quantity, stat})
+										insertIntoBookDB([]string{id, name, price, quantity, stat})
 									}
 
 								case 2:
 									for {
-										id := getInput("Enter id")
-										if id == "0" {
+										id := getIntInput("Enter id")
+										if id == 0 {
 											break
 										}
 										removeFromBookDB(id)
 									}
 								case 3:
 									for {
-										id := getInput("Enter id")
-										if id == "0" {
+										id := getIntInput("Enter id")
+										if id == 0 {
 											break
 										}
-										intID, err := strconv.Atoi(id)
-										if err != nil {
-											fmt.Println(err)
-											break
-										}
-										editBookDB(intID)
+										editFromBookDB(id)
 									}
 								case 4:
 									printBookDB()
 
 								case 5:
 									for {
-										id := getInput("Enter id")
-										if id == "0" {
+										id := getIntInput("Enter id")
+										if id == 0 {
 											break
 										}
-										intID, err := strconv.Atoi(id)
-										if err != nil {
-											fmt.Println(err)
-											continue
-										}
-										printOneRecordBook(intID)
+										printOneRecordBook(id)
 									}
 								case 0:
 									break ManagerBKSloop
@@ -285,7 +270,99 @@ mainLoop:
 						}
 					}
 				case "Librarian":
+				LibrarianMainLoop:
+					for {
+						input := getMenu("Librarian", []string{"List books", "Search books", "Delete books", "Edit books", "Add book", "Issue books", "Receive returned books"})
+						switch input {
+						case 0:
+							break LibrarianMainLoop
+						case 1:
+							printBookDB()
+						case 2:
+						SearchBook:
+							for {
+								id := getIntInput("Enter id")
+								if id == 0 {
+									break SearchBook
+								}
+								printOneRecordBook(id)
+							}
+						case 3:
+						DeleteBook:
+							for {
+								id := getIntInput("Enter id")
+								if id == 0 {
+									break DeleteBook
+								}
+								removeFromBookDB(id)
+							}
+						case 4:
+						EditBook:
+							for {
+								id := getIntInput("Enter id")
+								if id == 0 {
+									break EditBook
+								}
+								editFromBookDB(id)
+							}
+						case 5:
+						AddBook:
+							for {
+								id := getInput("Enter id")
+								if id == "0" {
+									break AddBook
+								}
+								name := getInput("Enter name")
+								if id == "0" {
+									break AddBook
+								}
+								price := getInput("Enter price")
+								if price == "0" {
+									break AddBook
+								}
+								quantity := getInput("Enter quantity")
+								if quantity == "0" {
+									break AddBook
+								}
+								stat := getInput("Enter stat")
+								if stat == "0" {
+									break AddBook
+								}
+								insertIntoBookDB([]string{id, name, price, quantity, stat})
 
+							}
+						case 6:
+						IssueBook:
+							for {
+								bookID := getIntInput("Enter book id")
+								if bookID == 0 {
+									break IssueBook
+								}
+								customerID := getIntInput("Enter book id")
+								if customerID == 0 {
+									break IssueBook
+								}
+								issueBook(bookID, customerID)
+							}
+						case 7:
+						ReceiveBooks:
+							for {
+								bookID := getIntInput("Enter book id")
+								if bookID == 0 {
+									break ReceiveBooks
+								}
+								customerID := getIntInput("Enter book id")
+								if customerID == 0 {
+									break ReceiveBooks
+								}
+								id := getIntInput("Enter safekeeping id ")
+								if id == 0 {
+									break ReceiveBooks
+								}
+								receiveBooks(bookID, customerID, id)
+							}
+						}
+					}
 				case "Cashier":
 				}
 			}

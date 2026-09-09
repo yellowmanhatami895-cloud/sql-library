@@ -17,6 +17,58 @@ func createDB() {
 	db.Exec("CREATE TABLE IF NOT EXISTS safekeeping (id INTEGER PRIMARY KEY AUTOINCREMENT,bookID INT NOT NULL,customerID INT NOT NULL,FOREIGN KEY (bookID) REFERENCES books(id),FOREIGN KEY (customerID) REFERENCES customer(id));")
 	fmt.Println("data base connected")
 }
+func receiveBooks(bookID int, customerID int, id int) {
+	var name string
+	var price string
+	var quantity int
+	var stat string
+	err = db.QueryRow("SELECT * FROM books WHERE id = ?", bookID).Scan(&bookID, &name, &price, &quantity, &stat)
+	if name == "" {
+		fmt.Println("id not found")
+		return
+	}
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_, err := db.Exec("DELETE FROM safekeeping WHERE  id == ?", id)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	_, err = db.Exec("UPDATE books set quantity = ? WHERE id = ?", quantity+1, bookID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+// use customer id
+func issueBook(bookID int, customerID int) {
+	var name string
+	var price string
+	var quantity int
+	var stat string
+	err = db.QueryRow("SELECT * FROM books WHERE id = ?", bookID).Scan(&bookID, &name, &price, &quantity, &stat)
+	if name == "" {
+		fmt.Println("id not found")
+	}
+	if err != nil {
+		fmt.Println(err)
+	}
+	_, err := db.Exec("INSERT INTO safekeeping(bookID,customerID)  VALUES(?,?)", bookID, customerID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	_, err = db.Exec("UPDATE books set quantity = ? WHERE id = ?", quantity-1, bookID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
 func checkDB() bool {
 
 	var count int
@@ -30,34 +82,37 @@ func checkDB() bool {
 	}
 	return true
 }
-func insertBookDB(record []string) error {
+func insertIntoBookDB(record []string) {
+
 	if len(record) != 5 {
-		return fmt.Errorf("Wrong length")
+		fmt.Println("Wrong length")
+		return
 	}
 	id, err := strconv.Atoi(record[0])
 	if err != nil {
-		return fmt.Errorf("id most be integer")
+		fmt.Println("id most be integer")
+		return
 	}
 
 	price, err := strconv.Atoi(record[2])
 
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return
 	}
 	quantity, err := strconv.Atoi(record[3])
 
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return
 	}
 	_, err = db.Exec("INSERT INTO books VALUES(?,?,?,?,?) ", id, record[1], price, quantity, record[4])
 
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return
 	}
-	return nil
+
 }
 func printBookDB() {
 	rows, err := db.Query("SELECT * FROM books")
@@ -83,7 +138,7 @@ func printBookDB() {
 	}
 
 }
-func removeFromBookDB(id string) {
+func removeFromBookDB(id int) {
 	var name string
 	db.QueryRow("SELECT name FROM books WHERE id = ?", id).Scan(&name)
 	if name == "" {
@@ -98,14 +153,15 @@ func removeFromBookDB(id string) {
 	fmt.Println(name + " Has been deleted")
 
 }
-func editBookDB(id int) {
+func editFromBookDB(id int) {
+
 	var row string
 	var name string
 	var price string
 	var quantity string
 	var stat string
 
-	err := db.QueryRow("SELECT * FROM books WHERE id = ?", id).Scan(&id, &name, &price, &quantity, &stat)
+	err = db.QueryRow("SELECT * FROM books WHERE id = ?", id).Scan(&id, &name, &price, &quantity, &stat)
 	if name == "" {
 		fmt.Println("id not found")
 	}
@@ -113,7 +169,7 @@ func editBookDB(id int) {
 		fmt.Println(err)
 
 	}
-	row = strconv.Itoa(id) + "  " + name + "  " + price + "  " + quantity + "  " + stat
+	row = strconv.Itoa(db.Stats().Idle) + "  " + name + "  " + price + "  " + quantity + "  " + stat
 	fmt.Println(row)
 	fmt.Println("Enter new row")
 	name = getInput("Enter name")
@@ -132,7 +188,7 @@ func printOneRecordBook(id int) {
 	var price int
 	var quantity string
 	var stat string
-	err := db.QueryRow("SELECT * FROM books WHERE id = ?", id).Scan(&id, &name, &price, &quantity, &stat)
+	err = db.QueryRow("SELECT * FROM books WHERE id = ?", id).Scan(&id, &name, &price, &quantity, &stat)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -152,7 +208,7 @@ func printOneRecordStaff(id int) {
 
 }
 
-func editStaffDB(id int) {
+func editFromStaffDB(id int) {
 	var row string
 	var name string
 	var password string
@@ -177,7 +233,7 @@ func editStaffDB(id int) {
 
 }
 
-func insertStaffDB(record []string) {
+func insertIntoStaffDB(record []string) {
 	if len(record) != 4 {
 		fmt.Println("Wrong length")
 		return
@@ -195,7 +251,7 @@ func insertStaffDB(record []string) {
 
 }
 
-func removeFromStaffDB(id string) {
+func removeFromStaffDB(id int) {
 	var name string
 	db.QueryRow("SELECT name FROM staff WHERE id = ?", id).Scan(&name)
 	if name == "" {
@@ -249,7 +305,7 @@ func printStaffDB() {
 	}
 
 }
-func removeFromCustomerDB(id string) {
+func removeFromCustomerDB(id int) {
 	var name string
 	db.QueryRow("SELECT name FROM customer WHERE id = ?", id).Scan(&name)
 	if name == "" {
@@ -264,7 +320,7 @@ func removeFromCustomerDB(id string) {
 	fmt.Println(name + " Has been deleted")
 
 }
-func editCustomerDB(id int) {
+func editFromCustomerDB(id int) {
 	var row string
 	var name string
 	var inventory string
@@ -330,7 +386,7 @@ func printOneRecordCustomer(id int) {
 	}
 	fmt.Println(name + " " + strconv.Itoa(inventory) + " " + password + " " + stat)
 }
-func insertCustomerDB(record []string) {
+func insertIntoCustomerDB(record []string) {
 	if len(record) != 5 {
 		fmt.Println("Wrong length ")
 		return
