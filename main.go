@@ -76,7 +76,74 @@ mainLoop:
 		case 0:
 			break mainLoop
 		case 1:
+			username := getInput("Enter username")
+			password := getInput("Enter password")
+			if checkCustomer(username, password) == true {
+			CustomerMainLoop:
+				for {
+					input := getMenu("Customer", []string{"Search book", "View borrowing history", "Borrow books", "View borrowed books"})
+					if input == 0 {
+						break CustomerMainLoop
+					}
+					switch input {
+					case 1:
+					CustomerSearchLoop:
+						for {
+							input := getMenu("Search", []string{"Search by id", "Search by name", "Search by stat", "Search by Price"})
+							if input == 0 {
+								break CustomerSearchLoop
+							}
+							switch input {
+							case 1:
+							SearchByID:
+								for {
+									input = getIntInput("Enter id")
+									if input == 0 {
+										break SearchByID
+									}
+									printOneRecordBookByID(input)
+								}
+							case 2:
+							SearchByName:
+								for {
+									input := getInput("Enter name")
+									if input == "0" {
+										break SearchByName
+									}
+									printBooksByName(input)
+								}
+							case 3:
+							SearchByStat:
+								for {
+									input := getInput("Enter Stat")
+									if input == "0" {
+										break SearchByStat
+									}
+									printBooksByStat(input)
+								}
+							case 4:
+							SearchByPrice:
+								for {
+									min := getInput("Enter min price")
+									if min == "0" {
+										break SearchByPrice
+									}
+									max := getInput("Enter max price")
+									if max == "0" {
+										break SearchByPrice
+									}
+									printBooksByPrice(min, max)
+								}
+							}
+						}
+					case 2:
 
+					case 3:
+
+					case 4:
+					}
+				}
+			}
 		case 2:
 			username := getInput("Enter user name")
 			password := getInput("Enter password")
@@ -259,7 +326,7 @@ mainLoop:
 										if id == 0 {
 											break
 										}
-										printOneRecordBook(id)
+										printOneRecordBookByID(id)
 									}
 								case 0:
 									break ManagerBKSloop
@@ -272,7 +339,7 @@ mainLoop:
 				case "Librarian":
 				LibrarianMainLoop:
 					for {
-						input := getMenu("Librarian", []string{"List books", "Search books", "Delete books", "Edit books", "Add book", "Issue books", "Receive returned books"})
+						input := getMenu("Librarian", []string{"List books", "Search books", "Delete books", "Edit books", "Add book"})
 						switch input {
 						case 0:
 							break LibrarianMainLoop
@@ -285,7 +352,7 @@ mainLoop:
 								if id == 0 {
 									break SearchBook
 								}
-								printOneRecordBook(id)
+								printOneRecordBookByID(id)
 							}
 						case 3:
 						DeleteBook:
@@ -331,39 +398,36 @@ mainLoop:
 								insertIntoBookDB([]string{id, name, price, quantity, stat})
 
 							}
-						case 6:
-						IssueBook:
-							for {
-								bookID := getIntInput("Enter book id")
-								if bookID == 0 {
-									break IssueBook
-								}
-								customerID := getIntInput("Enter book id")
-								if customerID == 0 {
-									break IssueBook
-								}
-								issueBook(bookID, customerID)
-							}
-						case 7:
-						ReceiveBooks:
-							for {
-								bookID := getIntInput("Enter book id")
-								if bookID == 0 {
-									break ReceiveBooks
-								}
-								customerID := getIntInput("Enter book id")
-								if customerID == 0 {
-									break ReceiveBooks
-								}
-								id := getIntInput("Enter safekeeping id ")
-								if id == 0 {
-									break ReceiveBooks
-								}
-								receiveBooks(bookID, customerID, id)
-							}
+
 						}
 					}
-				case "Cashier":
+					// after customer panel
+				case "Librarian Clerk":
+					input := getMenu("Librarian Clerk", []string{"Issue books", "Receive returned books", "List borrowed books", "Search customers", "View borrowing history"})
+					switch input {
+					case 1:
+					IssueBook:
+						for {
+							bookID := getIntInput("Enter bookID")
+							if bookID == 0 {
+								break IssueBook
+							}
+							customerID := getIntInput("Enter customerID")
+							if customerID == 0 {
+								break IssueBook
+							}
+							issueBook(bookID, customerID)
+						}
+
+					case 2:
+
+					case 3:
+
+					case 4:
+
+					case 5:
+					}
+
 				}
 			}
 		}

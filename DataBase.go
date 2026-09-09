@@ -17,6 +17,8 @@ func createDB() {
 	db.Exec("CREATE TABLE IF NOT EXISTS safekeeping (id INTEGER PRIMARY KEY AUTOINCREMENT,bookID INT NOT NULL,customerID INT NOT NULL,FOREIGN KEY (bookID) REFERENCES books(id),FOREIGN KEY (customerID) REFERENCES customer(id));")
 	fmt.Println("data base connected")
 }
+
+// use customer id
 func receiveBooks(bookID int, customerID int, id int) {
 	var name string
 	var price string
@@ -44,7 +46,6 @@ func receiveBooks(bookID int, customerID int, id int) {
 	}
 }
 
-// use customer id
 func issueBook(bookID int, customerID int) {
 	var name string
 	var price string
@@ -68,6 +69,12 @@ func issueBook(bookID int, customerID int) {
 		fmt.Println(err)
 		return
 	}
+	var safekeepingID int
+	err = db.QueryRow("SELECT * FROM safekeeping WHERE id = ?", bookID).Scan(&safekeepingID)
+	if name == "" {
+		fmt.Println("id not found")
+	}
+	fmt.Println("safekeeping id = ", safekeepingID)
 }
 func checkDB() bool {
 
@@ -88,29 +95,53 @@ func insertIntoBookDB(record []string) {
 		fmt.Println("Wrong length")
 		return
 	}
-	id, err := strconv.Atoi(record[0])
-	if err != nil {
-		fmt.Println("id most be integer")
-		return
-	}
+	if record[0] == "" {
+		price, err := strconv.Atoi(record[2])
 
-	price, err := strconv.Atoi(record[2])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		quantity, err := strconv.Atoi(record[3])
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	quantity, err := strconv.Atoi(record[3])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		_, err = db.Exec("INSERT INTO books VALUES(?,?,?,?,?) ", record[0], record[1], price, quantity, record[4])
 
-	if err != nil {
-		fmt.Println(err)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		return
-	}
-	_, err = db.Exec("INSERT INTO books VALUES(?,?,?,?,?) ", id, record[1], price, quantity, record[4])
 
-	if err != nil {
-		fmt.Println(err)
-		return
+	} else {
+		id, err := strconv.Atoi(record[0])
+		if err != nil {
+			fmt.Println("id most be integer")
+			return
+		}
+
+		price, err := strconv.Atoi(record[2])
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		quantity, err := strconv.Atoi(record[3])
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		_, err = db.Exec("INSERT INTO books VALUES(?,?,?,?,?) ", id, record[1], price, quantity, record[4])
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 	}
 
 }
@@ -183,7 +214,7 @@ func editFromBookDB(id int) {
 	}
 
 }
-func printOneRecordBook(id int) {
+func printOneRecordBookByID(id int) {
 	var name string
 	var price int
 	var quantity string
@@ -194,6 +225,78 @@ func printOneRecordBook(id int) {
 		return
 	}
 	fmt.Println(name + " " + strconv.Itoa(price) + " " + quantity + " " + stat)
+}
+func printBooksByName(name string) {
+	rows, err := db.Query("SELECT * FROM books WHERE name = ?", name)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		var stat string
+		var price int
+		var quantity string
+
+		err := rows.Scan(&id, &name, &price, &quantity, &stat)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Println(id, name, price, quantity, stat)
+	}
+}
+
+func printBooksByPrice(min string, max string) {
+	rows, err := db.Query("SELECT * FROM books WHERE price < ? AND price > ?", max, min)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		var name string
+		var price int
+		var quantity string
+		var stat string
+
+		err := rows.Scan(&id, &name, &price, &quantity, &stat)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Println(id, name, price, quantity, stat)
+	}
+}
+func printBooksByStat(stat string) {
+	rows, err := db.Query("SELECT * FROM books WHERE stat = ?", stat)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		var name string
+		var price int
+		var quantity string
+		var stat string
+
+		err := rows.Scan(&id, &name, &price, &quantity, &stat)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Println(id, name, price, quantity, stat)
+	}
 }
 func printOneRecordStaff(id int) {
 	var name string
@@ -223,8 +326,17 @@ func editFromStaffDB(id int) {
 	fmt.Println(row)
 	fmt.Println("Enter new row")
 	name = getInput("Enter name")
+	if name == "" {
+		return
+	}
 	password = getInput("Enter password")
+	if password == "" {
+		return
+	}
 	role = getInput("Enter role")
+	if role == "" {
+		return
+	}
 	_, err = db.Exec("UPDATE staff SET name = ?, password = ?, role = ? WHERE id = ?", name, password, role, id)
 	if err != nil {
 		fmt.Println(err)
@@ -238,17 +350,25 @@ func insertIntoStaffDB(record []string) {
 		fmt.Println("Wrong length")
 		return
 	}
-	id, err := strconv.Atoi(record[0])
-	if err != nil {
-		fmt.Println("id most be integer")
+	if record[0] == "" {
+		_, err = db.Exec("INSERT INTO staff(name,password,role) VALUES(?,?,?) ", record[1], record[2], record[3])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		return
+	} else {
+		id, err := strconv.Atoi(record[0])
+		if err != nil {
+			fmt.Println("id most be integer")
+			return
+		}
+		_, err = db.Exec("INSERT INTO staff VALUES(?,?,?,?) ", id, record[1], record[2], record[3])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
-	_, err = db.Exec("INSERT INTO staff VALUES(?,?,?,?) ", id, record[1], record[2], record[3])
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 }
 
 func removeFromStaffDB(id int) {
@@ -279,7 +399,7 @@ func checkStaff(username string, password string) (bool, string) {
 	if pass == password {
 		return true, role
 	}
-	fmt.Println("wrong password")
+	fmt.Println("wrong  password")
 	return false, ""
 }
 func printStaffDB() {
@@ -391,22 +511,52 @@ func insertIntoCustomerDB(record []string) {
 		fmt.Println("Wrong length ")
 		return
 	}
-	id, err := strconv.Atoi(record[0])
-	if err != nil {
-		fmt.Println("id most bbe integer")
-		return
+	if record[0] == "" {
+		inventory, err := strconv.Atoi(record[2])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		_, err = db.Exec("INSERT INTO customer(name,inventory,password,stat) VALUES(?,?,?,?) ", record[1], inventory, record[3], record[4])
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	} else {
+		id, err := strconv.Atoi(record[0])
+		if err != nil {
+			fmt.Println("id most bbe integer")
+			return
+		}
+
+		inventory, err := strconv.Atoi(record[2])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		_, err = db.Exec("INSERT INTO customer VALUES(?,?,?,?,?) ", id, record[1], inventory, record[3], record[4])
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
 
-	inventory, err := strconv.Atoi(record[2])
+}
+func checkCustomer(username string, password string) bool {
+	var pass string
+
+	err := db.QueryRow("SELECT password FROM customer WHERE name = ?", username).Scan(&pass)
+	if pass == "" {
+		fmt.Println("user not found")
+	}
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
-	_, err = db.Exec("INSERT INTO customer VALUES(?,?,?,?,?) ", id, record[1], inventory, record[3], record[4])
-
-	if err != nil {
-		fmt.Println(err)
-		return
+	if pass == password {
+		return true
 	}
-
+	fmt.Println("wrong  password")
+	return false
 }
