@@ -137,7 +137,8 @@ mainLoop:
 							}
 						}
 					case 2:
-
+						input := getIntInput("Enter customerID")
+						printBrowStory(input)
 					case 3:
 
 					case 4:

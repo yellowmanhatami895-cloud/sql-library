@@ -14,8 +14,29 @@ func createDB() {
 	db.Exec("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,price INT NOT NULL,quantity INT NOT NULL,stat TEXT DEFAULT 'Free');")
 	db.Exec("CREATE TABLE IF NOT EXISTS staff (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,password TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'Librarian');")
 	db.Exec("CREATE TABLE IF NOT EXISTS customer (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,inventory INT NOT NULL,password TEXT NOT NULL,stat TEXT DEFAULT 'Free');")
-	db.Exec("CREATE TABLE IF NOT EXISTS safekeeping (id INTEGER PRIMARY KEY AUTOINCREMENT,bookID INT NOT NULL,customerID INT NOT NULL,FOREIGN KEY (bookID) REFERENCES books(id),FOREIGN KEY (customerID) REFERENCES customer(id));")
+	db.Exec("CREATE TABLE IF NOT EXISTS safekeeping (id INTEGER PRIMARY KEY AUTOINCREMENT,bookID INT NOT NULL,customerID INT NOT NULL,FOREIGN KEY (bookID) REFERENCES books(id),FOREIGN KEY (customerID) REFERENCES customer(id)),stat TEXT;")
 	fmt.Println("data base connected")
+}
+
+func printBrowStory(customerID int) {
+	row, err := db.Query("SELECT * FROM safekeeping WHERE customerID = ? AND stat = 'Expired'", customerID)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var id int
+	var bookID int
+	var stat string
+	var bookName string
+	var customerName string
+	for row.Next() {
+		row.Scan(&id, &customerID, &bookID, &stat)
+
+		db.QueryRow("SELECT name FROM books WHERE id = ?", bookID).Scan(&bookName)
+		db.QueryRow("SELECT name FROM customer WHERE id = ?", customerID).Scan(&customerName)
+		fmt.Println(id, "~", bookName, "~", customerName, "~", stat)
+	}
 }
 
 // use customer id
@@ -33,13 +54,13 @@ func receiveBooks(bookID int, customerID int, id int) {
 		fmt.Println(err)
 		return
 	}
-	_, err := db.Exec("DELETE FROM safekeeping WHERE  id == ?", id)
+	_, err := db.Exec("UPDATE safekeeping SET stat = 'Expired' WHERE  id == ?", id)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	_, err = db.Exec("UPDATE books set quantity = ? WHERE id = ?", quantity+1, bookID)
+	_, err = db.Exec("UPDATE books SET quantity = ? WHERE id = ?", quantity+1, bookID)
 	if err != nil {
 		fmt.Println(err)
 		return
