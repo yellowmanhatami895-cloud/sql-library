@@ -69,86 +69,117 @@ mainLoop:
 			username := getInput("Enter First username")
 			password := getInput("Enter First password")
 			insertIntoStaffDB([]string{"1", username, password, "Manager"})
-
+			fmt.Println("Your staffID == 1")
 		}
 		input := getMenu("Library", []string{"Customer", "Staff"})
 		switch input {
 		case 0:
 			break mainLoop
 		case 1:
-			username := getInput("Enter username")
-			password := getInput("Enter password")
-			if checkCustomer(username, password) == true {
-			CustomerMainLoop:
-				for {
-					input := getMenu("Customer", []string{"Search book", "View borrowing history", "Borrow books", "View borrowed books"})
-					if input == 0 {
-						break CustomerMainLoop
+		loginLoop:
+			for {
+				input := getMenu("Library", []string{"Login", "Create account"})
+				if input == 0 {
+					break loginLoop
+				}
+				switch input {
+				case 1:
+
+					id := getIntInput("Enter id")
+					if id == 0 {
+						break loginLoop
 					}
-					switch input {
-					case 1:
-					CustomerSearchLoop:
+					password := getInput("Enter password")
+					if password == "0" {
+						break loginLoop
+					}
+					if checkCustomer(id, password) == true {
+					CustomerMainLoop:
 						for {
-							input := getMenu("Search", []string{"Search by id", "Search by name", "Search by stat", "Search by Price"})
+							input := getMenu("Customer", []string{"Search book", "View borrowing history", "Borrow books", "View borrowed books", "buy prime"})
 							if input == 0 {
-								break CustomerSearchLoop
+								break CustomerMainLoop
 							}
 							switch input {
 							case 1:
-							SearchByID:
+							CustomerSearchLoop:
 								for {
-									input = getIntInput("Enter id")
+									input := getMenu("Search", []string{"Search by id", "Search by name", "Search by stat", "Search by Price"})
 									if input == 0 {
-										break SearchByID
+										break CustomerSearchLoop
 									}
-									printOneRecordBookByID(input)
+									switch input {
+									case 1:
+									SearchByID:
+										for {
+											input = getIntInput("Enter id")
+											if input == 0 {
+												break SearchByID
+											}
+											printOneRecordBookByID(input)
+										}
+									case 2:
+									SearchByName:
+										for {
+											input := getInput("Enter name")
+											if input == "0" {
+												break SearchByName
+											}
+											printBooksByName(input)
+										}
+									case 3:
+									SearchByStat:
+										for {
+											input := getInput("Enter Stat")
+											if input == "0" {
+												break SearchByStat
+											}
+											printBooksByStat(input)
+										}
+									case 4:
+									SearchByPrice:
+										for {
+											min := getInput("Enter min price")
+											if min == "0" {
+												break SearchByPrice
+											}
+											max := getInput("Enter max price")
+											if max == "0" {
+												break SearchByPrice
+											}
+											printBooksByPrice(min, max)
+										}
+									}
 								}
 							case 2:
-							SearchByName:
-								for {
-									input := getInput("Enter name")
-									if input == "0" {
-										break SearchByName
-									}
-									printBooksByName(input)
-								}
+								printBrowStory(id)
 							case 3:
-							SearchByStat:
-								for {
-									input := getInput("Enter Stat")
-									if input == "0" {
-										break SearchByStat
-									}
-									printBooksByStat(input)
-								}
+								printBookDB()
+								input := getIntInput("Enter BookID")
+								insertIntoSafekeepingDB(id, input)
 							case 4:
-							SearchByPrice:
-								for {
-									min := getInput("Enter min price")
-									if min == "0" {
-										break SearchByPrice
-									}
-									max := getInput("Enter max price")
-									if max == "0" {
-										break SearchByPrice
-									}
-									printBooksByPrice(min, max)
-								}
+								printBrow(id)
+							case 5:
+								buyPrime(id)
+								fmt.Println("You have prime now")
 							}
 						}
-					case 2:
-						input := getIntInput("Enter customerID")
-						printBrowStory(input)
-					case 3:
-
-					case 4:
 					}
+
+				case 2:
+					username := getInput("Enter username")
+					password := getInput("Enter password")
+					var id int
+					db.QueryRow("SELECT MAX(id) FROM customer").Scan(&id)
+					fmt.Println("Your id :", id+1)
+					insertIntoCustomerDB([]string{strconv.Itoa(id + 1), username, "0", password, "Free"})
+					break loginLoop
 				}
 			}
 		case 2:
-			username := getInput("Enter user name")
+			id := getIntInput("Enter id")
 			password := getInput("Enter password")
-			if b, s := checkStaff(username, password); b == true {
+			if b, s := checkStaff(id, password); b == true {
 				switch s {
 
 				case "Manager":
@@ -156,7 +187,6 @@ mainLoop:
 				ManagerLoop:
 
 					for {
-						fmt.Println("Welcome ", username)
 						input := getMenu("Manager panel", []string{"Staff", "Customers", "Books"})
 						switch input {
 						case 1:

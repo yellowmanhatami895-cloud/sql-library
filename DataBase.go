@@ -18,8 +18,49 @@ func createDB() {
 	fmt.Println("data base connected")
 }
 
+func buyPrime(id int) {
+	db.Exec("UPDATE customer SET stat = 'prime' WHERE id = ?", id)
+}
+func insertIntoSafekeepingDB(customerID int, bookID int) {
+	var quantity int
+	db.QueryRow("SELECT quantity FROM books WHERE id = ?", bookID).Scan(&quantity)
+	if quantity <= 0 {
+		fmt.Println("out of stock")
+		return
+	}
+	_, err := db.Exec("UPDATE books set quantity = ? WHERE id = ?", quantity-1, bookID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_, err = db.Exec("INSERT INTO safekeeping(customerID,bookID) VALUES(?,?)", customerID, bookID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
 func printBrowStory(customerID int) {
 	row, err := db.Query("SELECT * FROM safekeeping WHERE customerID = ? AND stat = 'Expired'", customerID)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var id int
+	var bookID int
+	var stat string
+	var bookName string
+	var customerName string
+	for row.Next() {
+		row.Scan(&id, &customerID, &bookID, &stat)
+
+		db.QueryRow("SELECT name FROM books WHERE id = ?", bookID).Scan(&bookName)
+		db.QueryRow("SELECT name FROM customer WHERE id = ?", customerID).Scan(&customerName)
+		fmt.Println(id, "~", bookName, "~", customerName, "~", stat)
+	}
+}
+func printBrow(customerID int) {
+	row, err := db.Query("SELECT * FROM safekeeping WHERE customerID = ? ", customerID)
 
 	if err != nil {
 		fmt.Println(err)
@@ -407,10 +448,10 @@ func removeFromStaffDB(id int) {
 	fmt.Println(name + "Has been deleted")
 
 }
-func checkStaff(username string, password string) (bool, string) {
+func checkStaff(id int, password string) (bool, string) {
 	var pass string
 	var role string
-	err := db.QueryRow("SELECT password,role FROM staff WHERE name = ?", username).Scan(&pass, &role)
+	err := db.QueryRow("SELECT password,role FROM staff WHERE id = ?", id).Scan(&pass, &role)
 	if pass == "" {
 		fmt.Println("user not found")
 	}
@@ -547,7 +588,7 @@ func insertIntoCustomerDB(record []string) {
 	} else {
 		id, err := strconv.Atoi(record[0])
 		if err != nil {
-			fmt.Println("id most bbe integer")
+			fmt.Println("id most be integer")
 			return
 		}
 
@@ -565,10 +606,10 @@ func insertIntoCustomerDB(record []string) {
 	}
 
 }
-func checkCustomer(username string, password string) bool {
+func checkCustomer(id int, password string) bool {
 	var pass string
 
-	err := db.QueryRow("SELECT password FROM customer WHERE name = ?", username).Scan(&pass)
+	err := db.QueryRow("SELECT password FROM customer WHERE  id = ?", id).Scan(&pass)
 	if pass == "" {
 		fmt.Println("user not found")
 	}
